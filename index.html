@@ -1,104 +1,150 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>留言板</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        .message { border-bottom: 1px solid #eee; padding: 10px 0; }
-        input, textarea { width: 100%; padding: 8px; margin: 5px 0; }
-        @media (max-width: 480px) { body { padding: 10px; } }
-    </style>
-</head>
-<body>
-<div id="app">
-    <div v-if="!authenticated">
-        <input type="password" v-model="inputPwd" placeholder="请输入访问密码">
-        <button @click="login">进入</button>
-    </div>
-    
-    <div v-if="authenticated">
-        <textarea v-model="newMessage" placeholder="输入留言..."></textarea>
-        <button @click="submitMessage">提交</button>
-        
-        <div v-for="msg in messages" :key="msg.time" class="message">
-            <p>{{ msg.text }}</p>
-            <small>{{ formatTime(msg.time) }} - {{ msg.ip }}</small>
-        </div>
-    </div>
-</div>
-
-<script>
-const API_KEY = '$2a$10$KeLi9jDm.dt4FvTektpcS..FHwmkTRXTiqNc5cF4yfxXRnsrb0El6';
-const BIN_ID = '67f1526d8561e97a50f93799';
-const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-
-const app = Vue.createApp({
-    data() {
-        return {
-            authenticated: false,
-            inputPwd: '',
-            newMessage: '',
-            messages: []
-        }
-    },
-    async mounted() {
-        const savedPwd = localStorage.getItem('savedPwd');
-        if(savedPwd) await this.verifyPassword(savedPwd);
-    },
-    methods: {
-        async login() {
-            await this.verifyPassword(this.inputPwd);
-            if(this.authenticated) localStorage.setItem('savedPwd', this.inputPwd);
-        },
-        async verifyPassword(pwd) {
-            const data = await fetch(API_URL, {
-                headers: {'X-Master-Key': API_KEY}
-            }).then(r => r.json());
-            
-            if(data.record.password === pwd) {
-                this.authenticated = true;
-                this.messages = data.record.messages.reverse();
-            } else {
-                alert('密码错误');
-            }
-        },
-        async submitMessage() {
-            const ip = await fetch('https://api.ipify.org?format=json')
-                .then(r => r.json()).then(r => r.ip);
-            
-            const newMsg = {
-                text: this.newMessage,
-                ip: ip,
-                time: Date.now()
-            };
-            
-            // 获取最新数据并更新
-            const fullData = await fetch(API_URL, {
-                headers: {'X-Master-Key': API_KEY}
-            }).then(r => r.json());
-            
-            fullData.record.messages.push(newMsg);
-            
-            await fetch(API_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': API_KEY
-                },
-                body: JSON.stringify(fullData.record)
-            });
-            
-            this.messages.unshift(newMsg);
-            this.newMessage = '';
-        },
-        formatTime(timestamp) {
-            return new Date(timestamp).toLocaleString();
-        }
-    }
-}).mount('#app');
-</script>
-</body>
-</html>
+<!DOCTYPE html> 
+<html> 
+ 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> 
+    <title>留言板</title> 
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> 
+    <style> 
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background-color: #f4f4f9; 
+        } 
+ 
+        .message { 
+            border-bottom: 1px solid #eee; 
+            padding: 10px 0; 
+            background-color: #fff; 
+            border-radius: 8px; 
+            margin-bottom: 10px; 
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+        } 
+ 
+        input, 
+        textarea { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 5px 0; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        } 
+ 
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            background-color: #007BFF; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            transition: background-color 0.3s ease; 
+        } 
+ 
+        button:hover { 
+            background-color: #0056b3; 
+        } 
+ 
+        @media (max-width: 480px) { 
+            body { 
+                padding: 10px; 
+            } 
+        } 
+    </style> 
+</head> 
+ 
+<body> 
+    <div id="app"> 
+        <div v-if="!authenticated"> 
+            <input type="password" v-model="inputPwd" placeholder="请输入访问密码"> 
+            <button @click="login">进入</button> 
+        </div> 
+ 
+        <div v-if="authenticated"> 
+            <textarea v-model="newMessage" placeholder="输入留言..."></textarea> 
+            <button @click="submitMessage">提交</button> 
+ 
+            <div v-for="msg in messages" :key="msg.time" class="message"> 
+                <p>{{ msg.text }}</p> 
+                <small>{{ formatTime(msg.time) }} - {{ msg.ip }}</small> 
+            </div> 
+        </div> 
+    </div> 
+ 
+    <script> 
+        const API_KEY = '$2a$10$KeLi9jDm.dt4FvTektpcS..FHwmkTRXTiqNc5cF4yfxXRnsrb0El6'; 
+        const BIN_ID = '67f1526d8561e97a50f93799'; 
+        const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`; 
+ 
+        const app = Vue.createApp({ 
+            data() { 
+                return { 
+                    authenticated: false, 
+                    inputPwd: '', 
+                    newMessage: '', 
+                    messages: [] 
+                }; 
+            }, 
+            async mounted() { 
+                const savedPwd = localStorage.getItem('savedPwd'); 
+                if (savedPwd) await this.verifyPassword(savedPwd); 
+            }, 
+            methods: { 
+                async login() { 
+                    await this.verifyPassword(this.inputPwd); 
+                    if (this.authenticated) localStorage.setItem('savedPwd', this.inputPwd); 
+                }, 
+                async verifyPassword(pwd) { 
+                    const data = await fetch(API_URL, { 
+                        headers: { 'X-Master-Key': API_KEY } 
+                    }).then(r => r.json()); 
+ 
+                    if (data.record.password === pwd) { 
+                        this.authenticated = true; 
+                        this.messages = data.record.messages.reverse(); 
+                    } else { 
+                        alert('密码错误'); 
+                    } 
+                }, 
+                async submitMessage() { 
+                    const ip = await fetch('https://api.ipify.org?format=json') 
+                       .then(r => r.json()).then(r => r.ip); 
+ 
+                    const newMsg = { 
+                        text: this.newMessage, 
+                        ip: ip, 
+                        time: Date.now() 
+                    }; 
+ 
+                    // 获取最新数据并更新 
+                    const fullData = await fetch(API_URL, { 
+                        headers: { 'X-Master-Key': API_KEY } 
+                    }).then(r => r.json()); 
+ 
+                    fullData.record.messages.push(newMsg); 
+ 
+                    await fetch(API_URL, { 
+                        method: 'PUT', 
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'X-Master-Key': API_KEY 
+                        }, 
+                        body: JSON.stringify(fullData.record) 
+                    }); 
+ 
+                    this.messages.unshift(newMsg); 
+                    this.newMessage = ''; 
+                }, 
+                formatTime(timestamp) { 
+                    return new Date(timestamp).toLocaleString(); 
+                } 
+            } 
+        }).mount('#app'); 
+    </script> 
+</body> 
+ 
+</html>​
