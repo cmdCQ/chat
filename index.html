@@ -1,94 +1,104 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>手机留言板</title>
     <meta charset="UTF-8">
-    <!-- 添加移动端视口设置 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>留言板</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        /* 移动端优化样式 */
-        body {
-            margin: 0;
-            padding: 10px;
-            font-family: -apple-system, system-ui, sans-serif;
-            line-height: 1.5;
-        }
-
-        #login, #messageForm {
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        input, textarea, button {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            font-weight: bold;
-        }
-
-        .message {
-            background: white;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* 移动端横屏适配 */
-        @media (min-width: 500px) {
-            body {
-                max-width: 500px;
-                margin: 20px auto;
-            }
-        }
-
-        /* 隐藏滚动条 */
-        ::-webkit-scrollbar {
-            display: none;
-        }
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .message { border-bottom: 1px solid #eee; padding: 10px 0; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; }
+        @media (max-width: 480px) { body { padding: 10px; } }
     </style>
 </head>
 <body>
-    <!-- 界面结构保持不变 -->
-    <div id="login">
-        <input type="password" id="password" placeholder="输入密码">
-        <button onclick="checkPassword()">登录</button>
+<div id="app">
+    <div v-if="!authenticated">
+        <input type="password" v-model="inputPwd" placeholder="请输入访问密码">
+        <button @click="login">进入</button>
     </div>
-
-    <div id="messageForm">
-        <textarea id="content" placeholder="输入留言" rows="4"></textarea>
-        <button onclick="submitMessage()">提交</button>
+    
+    <div v-if="authenticated">
+        <textarea v-model="newMessage" placeholder="输入留言..."></textarea>
+        <button @click="submitMessage">提交</button>
+        
+        <div v-for="msg in messages" :key="msg.time" class="message">
+            <p>{{ msg.text }}</p>
+            <small>{{ formatTime(msg.time) }} - {{ msg.ip }}</small>
+        </div>
     </div>
-
-    <div id="messages"></div>
+</div>
 
 <script>
-    // 原有JavaScript代码保持不变，只需确保触摸响应
-    // 配置区（需要用户自己修改）
-    const PASSWORD = "616161"; 
-    const JSONBIN_ID = "67f1526d8561e97a50f93799";
-    const API_KEY = "$2a$10$KeLi9jDm.dt4FvTektpcS..FHwmkTRXTiqNc5cF4yfxXRnsrb0El6";
+const API_KEY = '$2a$10$KeLi9jDm.dt4FvTektpcS..FHwmkTRXTiqNc5cF4yfxXRnsrb0El6';
+const BIN_ID = '67f15c998561e97a50f93bc7';
+const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-    // 添加触摸反馈优化
-    document.querySelectorAll('button').forEach(btn => {
-        btn.ontouchstart = () => btn.style.opacity = 0.7;
-        btn.ontouchend = () => btn.style.opacity = 1;
-    });
-
-    // 原有函数保持不变...
-    // [保持之前的checkPassword, getIP, submitMessage, loadMessages函数]
+const app = Vue.createApp({
+    data() {
+        return {
+            authenticated: false,
+            inputPwd: '',
+            newMessage: '',
+            messages: []
+        }
+    },
+    async mounted() {
+        const savedPwd = localStorage.getItem('savedPwd');
+        if(savedPwd) await this.verifyPassword(savedPwd);
+    },
+    methods: {
+        async login() {
+            await this.verifyPassword(this.inputPwd);
+            if(this.authenticated) localStorage.setItem('savedPwd', this.inputPwd);
+        },
+        async verifyPassword(pwd) {
+            const data = await fetch(API_URL, {
+                headers: {'X-Master-Key': API_KEY}
+            }).then(r => r.json());
+            
+            if(data.record.password === pwd) {
+                this.authenticated = true;
+                this.messages = data.record.messages.reverse();
+            } else {
+                alert('密码错误');
+            }
+        },
+        async submitMessage() {
+            const ip = await fetch('https://api.ipify.org?format=json')
+                .then(r => r.json()).then(r => r.ip);
+            
+            const newMsg = {
+                text: this.newMessage,
+                ip: ip,
+                time: Date.now()
+            };
+            
+            // 获取最新数据并更新
+            const fullData = await fetch(API_URL, {
+                headers: {'X-Master-Key': API_KEY}
+            }).then(r => r.json());
+            
+            fullData.record.messages.push(newMsg);
+            
+            await fetch(API_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': API_KEY
+                },
+                body: JSON.stringify(fullData.record)
+            });
+            
+            this.messages.unshift(newMsg);
+            this.newMessage = '';
+        },
+        formatTime(timestamp) {
+            return new Date(timestamp).toLocaleString();
+        }
+    }
+}).mount('#app');
 </script>
 </body>
 </html>
