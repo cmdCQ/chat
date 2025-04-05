@@ -110,6 +110,7 @@
                         alert('密码错误');
                     }
                 },
+
                 async submitMessage() { 
     try { 
         const ip = await fetch('https://api.ipify.org?format=json') 
@@ -143,6 +144,7 @@
         console.error(error); 
     } 
 }​
+                
 
                     // 获取最新数据并更新
                     const fullData = await fetch(API_URL, {
