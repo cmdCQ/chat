@@ -110,40 +110,15 @@
                         alert('密码错误');
                     }
                 },
+                async submitMessage() {
+                    const ip = await fetch('https://api.ipify.org?format=json')
+                       .then(r => r.json()).then(r => r.ip);
 
-                async submitMessage() { 
-    try { 
-        const ip = await fetch('https://api.ipify.org?format=json') 
-           .then(r => r.json()).then(r => r.ip); 
- 
-        const newMsg = { 
-            text: this.newMessage, 
-            ip: ip, 
-            time: Date.now() 
-        }; 
- 
-        const fullData = await fetch(API_URL, { 
-            headers: { 'X-Master-Key': API_KEY } 
-        }).then(r => r.json()); 
- 
-        fullData.record.messages.push(newMsg); 
- 
-        await fetch(API_URL, { 
-            method: 'PUT', 
-            headers: { 
-                'Content-Type': 'application/json', 
-                'X-Master-Key': API_KEY 
-            }, 
-            body: JSON.stringify(fullData.record) 
-        }); 
- 
-        this.messages.unshift(newMsg); 
-        this.newMessage = ''; 
-    } catch (error) { 
-        alert('提交留言时出错，请检查网络连接或稍后再试。'); 
-        console.error(error); 
-    } 
-}​
+                    const newMsg = {
+                        text: this.newMessage,
+                        ip: ip,
+                        time: Date.now()
+                    };
                 
 
                     // 获取最新数据并更新
