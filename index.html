@@ -5,34 +5,157 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>留言板</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 基础样式 */
+        :root {
+            --primary-color: #2196F3;
+            --background: #f5f5f5;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--background);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        #app {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* 登录界面 */
+        .auth-box {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-top: 40%;
+        }
+
+        input[type="password"], 
+        textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, 
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+        }
+
+        /* 按钮样式 */
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 8px 0;
+            transition: all 0.3s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+            background: #1976D2;
+        }
+
+        /* 消息列表 */
+        .message-list {
+            margin-top: 24px;
+        }
+
+        .message-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .message-card p {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .message-card small {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            #app {
+                padding: 12px;
+            }
+            
+            .auth-box {
+                margin-top: 20vh;
+                padding: 16px;
+            }
+            
+            button {
+                padding: 14px;
+                font-size: 15px;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: #121212;
+                --card-bg: #1E1E1E;
+            }
+            
+            body {
+                color: #fff;
+            }
+            
+            input, textarea {
+                background: #2A2A2A;
+                border-color: #333;
+                color: #fff;
+            }
+        }
+    </style>
 </head>
 <body>
 <div id="app">
-    <div v-if="!authenticated" class="auth-container">
+    <div v-if="!authenticated" class="auth-box">
         <input type="password" v-model="inputPwd" placeholder="请输入访问密码">
-        <button @click="login">进入系统</button>
+        <button @click="login">进入留言板</button>
     </div>
     
-    <div v-if="authenticated" class="message-container">
-        <textarea v-model="newMessage" 
-                 placeholder="输入留言..."
-                 rows="3"></textarea>
+    <div v-if="authenticated">
+        <textarea v-model="newMessage" placeholder="输入留言..." rows="3"></textarea>
         <button @click="submitMessage">发布留言</button>
         
-        <transition-group name="fade">
-            <div v-for="msg in messages" 
-                 :key="msg.time" 
-                 class="message">
+        <div class="message-list">
+            <div v-for="msg in messages" :key="msg.time" class="message-card">
                 <p>{{ msg.text }}</p>
                 <small>{{ formatTime(msg.time) }} · {{ msg.ip }}</small>
             </div>
-        </transition-group>
+        </div>
     </div>
 </div>
 
+<!-- 保持原有脚本不变 -->
 <script>
-// 原有JavaScript代码保持不变
+// ... 原有脚本内容保持不变 ...
 </script>
 </body>
 </html>
