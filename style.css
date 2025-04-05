@@ -1,0 +1,110 @@
+/* style.css */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --background: #f5f6fa;
+    --text-color: #2c3e50;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: var(--background);
+    color: var(--text-color);
+}
+
+.auth-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+}
+
+.message-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.message {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    transition: all 0.2s;
+}
+
+.message:last-child {
+    border-bottom: none;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+input:focus, textarea:focus {
+    border-color: var(--secondary-color);
+    outline: none;
+}
+
+button {
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+    margin-top: 8px;
+}
+
+button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+small {
+    color: #7f8c8d;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 12px;
+    }
+    
+    .auth-container,
+    .message-container {
+        padding: 1rem;
+        border-radius: 8px;
+    }
+    
+    button {
+        padding: 14px;
+        font-size: 15px;
+    }
+}
+
+.loading {
+    text-align: center;
+    padding: 1rem;
+    color: #7f8c8d;
+}
+
+.fade-enter-active {
+    transition: opacity 0.3s;
+}
+.fade-enter-from {
+    opacity: 0;
+}
