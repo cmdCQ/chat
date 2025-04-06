@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -13,15 +14,18 @@
             padding: 20px;
             background-color: #f4f4f9;
         }
+
         .message {
             border-bottom: 1px solid #eee;
             padding: 10px 0;
             background-color: #fff;
             border-radius: 8px;
             margin-bottom: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        input, textarea {
+
+        input,
+        textarea {
             width: 100%;
             padding: 12px;
             margin: 5px 0;
@@ -29,6 +33,7 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
+
         button {
             width: 100%;
             padding: 12px;
@@ -39,35 +44,42 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
+
         button:hover {
             background-color: #0056b3;
         }
+
         @media (max-width: 480px) {
-            body { padding: 10px; }
+            body {
+                padding: 10px;
+            }
         }
     </style>
 </head>
+
 <body>
     <div id="app">
         <div v-if="!authenticated">
             <input type="password" v-model="inputPwd" placeholder="请输入访问密码">
             <button @click="login">进入</button>
         </div>
- 
+
         <div v-if="authenticated">
             <textarea v-model="newMessage" placeholder="输入留言..."></textarea>
             <button @click="submitMessage">提交</button>
- 
+
             <div v-for="msg in messages" :key="msg.time" class="message">
                 <p>{{ msg.text }}</p>
                 <small>{{ formatTime(msg.time) }} - {{ msg.ip }}</small>
             </div>
         </div>
     </div>
- 
+
     <script>
-        const DATA_URL = "https://message-1316123232.cos.ap-nanjing.myqcloud.com/data.json";
- 
+        const API_KEY = '$2a$10$KeLi9jDm.dt4FvTektpcS..FHwmkTRXTiqNc5cF4yfxXRnsrb0El6';
+        const BIN_ID = '67f15c998561e97a50f93bc7';
+        const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
         const app = Vue.createApp({
             data() {
                 return {
@@ -87,47 +99,45 @@
                     if (this.authenticated) localStorage.setItem('savedPwd', this.inputPwd);
                 },
                 async verifyPassword(pwd) {
-                    try {
-                        const response = await fetch(DATA_URL);
-                        const data = await response.json();
-                        
-                        if (data.password === pwd) {
-                            this.authenticated = true;
-                            this.messages = data.messages.reverse();
-                        } else {
-                            alert('密码错误');
-                        }
-                    } catch (error) {
-                        alert('数据加载失败，请检查网络');
+                    const data = await fetch(API_URL, {
+                        headers: { 'X-Master-Key': API_KEY }
+                    }).then(r => r.json());
+
+                    if (data.record.password === pwd) {
+                        this.authenticated = true;
+                        this.messages = data.record.messages.reverse();
+                    } else {
+                        alert('密码错误');
                     }
                 },
                 async submitMessage() {
-                    try {
-                        const ip = await fetch('https://api.ipify.org?format=json')
-                            .then(r => r.json()).then(r => r.ip);
- 
-                        // 获取最新数据 
-                        const currentData = await fetch(DATA_URL).then(r => r.json());
-                        
-                        const newMsg = {
-                            text: this.newMessage,
-                            ip: ip,
-                            time: Date.now()
-                        };
-                        currentData.messages.push(newMsg);
- 
-                        // 更新存储 
-                        await fetch(DATA_URL, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(currentData)
-                        });
- 
-                        this.messages.unshift(newMsg);
-                        this.newMessage = '';
-                    } catch (error) {
-                        alert('提交失败，请重试');
-                    }
+                    const ip = await fetch('https://api.ipify.org?format=json')
+                       .then(r => r.json()).then(r => r.ip);
+
+                    const newMsg = {
+                        text: this.newMessage,
+                        ip: ip,
+                        time: Date.now()
+                    };
+
+                    // 获取最新数据并更新
+                    const fullData = await fetch(API_URL, {
+                        headers: { 'X-Master-Key': API_KEY }
+                    }).then(r => r.json());
+
+                    fullData.record.messages.push(newMsg);
+
+                    await fetch(API_URL, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': API_KEY
+                        },
+                        body: JSON.stringify(fullData.record)
+                    });
+
+                    this.messages.unshift(newMsg);
+                    this.newMessage = '';
                 },
                 formatTime(timestamp) {
                     return new Date(timestamp).toLocaleString();
@@ -136,4 +146,5 @@
         }).mount('#app');
     </script>
 </body>
-</html>​
+
+</html>​​
