@@ -7,15 +7,15 @@
     <title>留言板</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        /* 原有样式保持不变 */
-        body {{
+        body {
             font-family: Arial, sans-serif;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f4f4f9;
         }
-                .message {
+ 
+        .message {
             border-bottom: 1px solid #eee;
             padding: 10px 0;
             background-color: #fff;
@@ -23,7 +23,7 @@
             margin-bottom: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-
+ 
         input,
         textarea {
             width: 100%;
@@ -33,7 +33,7 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
-
+ 
         button {
             width: 100%;
             padding: 12px;
@@ -44,16 +44,15 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-
+ 
         button:hover {
             background-color: #0056b3;
         }
-
+ 
         @media (max-width: 480px) {
             body {
                 padding: 10px;
             }
-        }
         }
     </style>
 </head>
@@ -64,92 +63,92 @@
             <input type="password" v-model="inputPwd" placeholder="请输入访问密码">
             <button @click="login">进入</button>
         </div>
-
+ 
         <div v-if="authenticated">
             <textarea v-model="newMessage" placeholder="输入留言..."></textarea>
             <button @click="submitMessage">提交</button>
-
+ 
             <div v-for="msg in messages" :key="msg.time" class="message">
                 <p>{{ msg.text }}</p>
                 <small>{{ formatTime(msg.time) }} - {{ msg.ip }}</small>
             </div>
         </div>
     </div>
-    <script>
-        // 腾讯云 COS 配置 
-        const COS_BUCKET = 'message-1316123232.cos.ap-nanjing.myqcloud.com';
-        const DATA_KEY = 'data.json'; // 存储数据的 JSON 文件路径 
  
-        const app = Vue.createApp({{
-            data() {{
-                return {{
+    <script>
+        // 腾讯云 COS 配置（替换为你的存储桶地址）
+        const COS_URL = 'https://message-1316123232.cos.ap-nanjing.myqcloud.com/data.json';
+ 
+        const app = Vue.createApp({
+            data() {
+                return {
                     authenticated: false,
                     inputPwd: '',
                     newMessage: '',
                     messages: []
-                }};
-            }},
-            async mounted() {{
+                };
+            },
+            async mounted() {
                 const savedPwd = localStorage.getItem('savedPwd');
                 if (savedPwd) await this.verifyPassword(savedPwd);
-            }},
-            methods: {{
-                async login() {{
+            },
+            methods: {
+                async login() {
                     await this.verifyPassword(this.inputPwd);
                     if (this.authenticated) localStorage.setItem('savedPwd', this.inputPwd);
-                }},
-                async verifyPassword(pwd) {{
-                    try {{
-                        // 直接从 COS 获取数据 
-                        const response = await fetch(`https://${{COS_BUCKET}}/${{DATA_KEY}}`);
+                },
+                async verifyPassword(pwd) {
+                    try {
+                        const response = await fetch(COS_URL);
                         const data = await response.json();
                         
-                        if (data.password === pwd) {{
+                        if (data.password === pwd) {
                             this.authenticated = true;
                             this.messages = data.messages.reverse();
-                        }} else {{
+                        } else {
                             alert('密码错误');
-                        }}
-                    }} catch (error) {{
-                        alert('数据加载失败，请检查网络');
-                    }}
-                }},
-                async submitMessage() {{
-                    try {{
-                        const ip = await fetch('https://api.ipify.org?format=json')
-                            .then(r => r.json()).then(r => r.ip);
+                        }
+                    } catch (error) {
+                        alert('获取数据失败，请检查网络');
+                    }
+                },
+                async submitMessage() {
+                    const ip = await fetch('https://api.ipify.org?format=json')
+                       .then(r => r.json()).then(r => r.ip);
  
-                        // 获取最新数据 
-                        const response = await fetch(`https://${{COS_BUCKET}}/${{DATA_KEY}}`);
-                        const fullData = await response.json();
+                    const newMsg = {
+                        text: this.newMessage,
+                        ip: ip,
+                        time: Date.now()
+                    };
  
-                        // 添加新留言 
-                        fullData.messages.push({{
-                            text: this.newMessage,
-                            ip: ip,
-                            time: Date.now()
-                        }});
- 
-                        // 更新到 COS 
-                        await fetch(`https://${{COS_BUCKET}}/${{DATA_KEY}}`, {{
+                    try {
+                        // 获取当前数据 
+                        const currentData = await fetch(COS_URL).then(r => r.json());
+                        
+                        // 更新数据 
+                        currentData.messages.push(newMsg);
+                        
+                        // 上传新数据 
+                        await fetch(COS_URL, {
                             method: 'PUT',
-                            headers: {{
+                            headers: {
                                 'Content-Type': 'application/json'
-                            }},
-                            body: JSON.stringify(fullData)
-                        }});
+                            },
+                            body: JSON.stringify(currentData)
+                        });
  
-                        this.messages.unshift(fullData.messages.slice(-1)[0]);
+                        this.messages.unshift(newMsg);
                         this.newMessage = '';
-                    }} catch (error) {{
+                    } catch (error) {
                         alert('提交失败，请检查网络');
-                    }}
-                }},
-                formatTime(timestamp) {{
+                    }
+                },
+                formatTime(timestamp) {
                     return new Date(timestamp).toLocaleString();
-                }}
-            }}
-        }}).mount('#app');
+                }
+            }
+        }).mount('#app');
     </script>
 </body>
 </html>​
