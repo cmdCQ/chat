@@ -14,17 +14,67 @@
             margin: 0 auto;
             padding: 20px;
             background-color: #f4f4f9;
-        }}
-        /* 其他样式与原始代码一致 */
+        }
+                .message {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            background-color: #fff;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+        }
+        }
     </style>
 </head>
  
 <body>
-    <!-- HTML 结构保持不变 -->
     <div id="app">
-        <!-- 原有认证和留言界面结构保持不变 -->
+        <div v-if="!authenticated">
+            <input type="password" v-model="inputPwd" placeholder="请输入访问密码">
+            <button @click="login">进入</button>
+        </div>
+
+        <div v-if="authenticated">
+            <textarea v-model="newMessage" placeholder="输入留言..."></textarea>
+            <button @click="submitMessage">提交</button>
+
+            <div v-for="msg in messages" :key="msg.time" class="message">
+                <p>{{ msg.text }}</p>
+                <small>{{ formatTime(msg.time) }} - {{ msg.ip }}</small>
+            </div>
+        </div>
     </div>
- 
     <script>
         // 腾讯云 COS 配置 
         const COS_BUCKET = 'message-1316123232.cos.ap-nanjing.myqcloud.com';
